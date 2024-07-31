@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
+	<rule ref="Generic.PHP.RequireStrictTypes" />
+	 <rule ref="PEAR">
+		<exclude name="PEAR.Commenting"/>
+    </rule>
+	<rule ref="Zend">
+		<exclude name="Generic.Files.LineLength"/>
+	</rule>
+</ruleset>
