@@ -1,0 +1,15 @@
+{
+  "anyOf": [
+      {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+      },
+      {
+          "type": "array",
+          "items": {
+              "type": "object"
+          }
+      }
+  ]
+}

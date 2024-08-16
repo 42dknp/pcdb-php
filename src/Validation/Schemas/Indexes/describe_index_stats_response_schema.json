@@ -1,0 +1,19 @@
+{
+    "type": "object",
+    "properties": {
+      "dimension": { "type": "integer" },
+      "indexFullness": { "type": "number" },
+      "namespaces": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "vectorCount": { "type": "integer" }
+          },
+          "required": ["vectorCount"]
+        }
+      }
+    },
+    "required": ["dimension", "indexFullness", "namespaces"]
+  }
+  

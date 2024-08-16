@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace PCDB\Services;
 
 use PCDB\Http\Client;
-use PCDB\Exceptions\PCDBException;
 use PCDB\Models\VectorQuery;
 use PCDB\Models\VectorModel;
+use PCDB\Validation\PCDBValidator;
+use PCDB\Exceptions\PCDBException;
 
 /**
  * VectorService
@@ -18,14 +19,17 @@ class VectorService
 {
     private Client $_client;
 
+    private PCDBValidator $_validator;
+
     /**
      * VectorService constructor.
      *
      * @param Client $_client PCDB client.
      */
-    public function __construct(Client $_client)
+    public function __construct(Client $_client, ?PCDBValidator $_validator = null)
     {
         $this->_client = $_client;
+        $this->_validator = $_validator ?? new PCDBValidator(new \JsonSchema\Validator());
     }
 
     /**
@@ -40,9 +44,7 @@ class VectorService
      */
     public function upsert(string $indexName, array $vectors, ?string $namespace = null): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
+        $this->_validator->checkNonEmptyValue($indexName, 'Index name');
     
         $formattedVectors = array_map(
             function (VectorModel $vector) {
@@ -69,7 +71,13 @@ class VectorService
             $payload['namespace'] = $namespace;
         }
     
-        return $this->_client->request('POST', "/vectors/upsert", $payload);
+        $this->_validator->validate($payload, 'Vectors/upsert_vectors_request_schema.json');
+
+        $response = $this->_client->request('POST', "/vectors/upsert", $payload);
+
+        $this->_validator->validate($response, 'Vectors/upsert_vectors_response_schema.json');
+
+        return $response;
     }
 
     /**
@@ -84,22 +92,28 @@ class VectorService
      */
     public function fetch(string $indexName, array $vectorIds, ?string $namespace = null): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
+        $this->_validator->checkNonEmptyValue($indexName, 'Index name');
 
         $query = '';
-        foreach ($vectorIds as $id) {
-            $query .= 'ids=' . urlencode($id) . '&';
-        }
+
+        // Prepare the payload and query string in a single loop
+        $payload = ['ids' => $vectorIds];
+        $queryParts = array_map(fn($id) => 'ids=' . urlencode($id), $vectorIds);
 
         if ($namespace) {
-            $query .= 'namespace=' . urlencode($namespace) . '&';
+            $payload['namespace'] = $namespace;
+            $queryParts[] = 'namespace=' . urlencode($namespace);
         }
 
-        $query = rtrim($query, '&');
+        $query = implode('&', $queryParts);
 
-        return $this->_client->request('GET', "/vectors/fetch?$query");
+        $this->_validator->validate($payload, 'Vectors/fetch_vectors_request_schema.json');
+
+        $response = $this->_client->request('GET', "/vectors/fetch?$query");
+
+        $this->_validator->validate($response, 'Vectors/fetch_vectors_response_schema.json');
+
+        return $response;
     }
 
     /**
@@ -113,9 +127,7 @@ class VectorService
      */
     public function query(string $indexName, VectorQuery $query): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
+        $this->_validator->checkNonEmptyValue($indexName, 'Index name');
 
         $payload = [
             'vector' => $query->vector,
@@ -132,7 +144,13 @@ class VectorService
             $payload['namespace'] = $query->namespace;
         }
 
-        return $this->_client->request('POST', '/query', $payload);
+        $this->_validator->validate($payload, 'Vectors/query_vectors_request_schema.json');
+
+        $response = $this->_client->request('POST', '/query', $payload);
+
+        $this->_validator->validate($response, 'Vectors/query_vectors_response_schema.json');
+
+        return $response;
     }
 
     /**
@@ -149,12 +167,8 @@ class VectorService
      */
     public function update(string $indexName, string $vectorId, array $values, array $metadata, ?string $namespace = null): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
-        if (empty($vectorId)) {
-            throw new PCDBException('Vector ID cannot be empty');
-        }
+        $this->_validator->checkNonEmptyValue($indexName, 'Index name');
+        $this->_validator->checkNonEmptyValue($vectorId, 'Vector ID');
 
         $payload = [
             'id' => $vectorId,
@@ -166,7 +180,14 @@ class VectorService
             $payload['namespace'] = $namespace;
         }
 
-        return $this->_client->request('POST', '/vectors/update', $payload);
+        $this->_validator->validate($payload, 'Vectors/update_vector_request_schema.json');
+
+        $response = $this->_client->request('POST', '/vectors/update', $payload);
+
+        $this->_validator->validate($response, 'Vectors/empty_response_schema.json');
+
+        return $response;
+
     }
 
     /**
@@ -183,20 +204,28 @@ class VectorService
      */
     public function listVectorIDs(string $indexName, ?string $namespace = null, ?string $prefix = null, ?int $limit = 100, ?string $paginationToken = null): array 
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
+        $this->_validator->checkNonEmptyValue($indexName, 'Index name');
 
-        $query = http_build_query(
+        $queryParams = array_filter(
             [
-            'namespace' => $namespace,
-            'prefix' => $prefix,
-            'limit' => $limit,
-            'pagination_token' => $paginationToken,
+                'namespace' => $namespace,
+                'prefix' => $prefix,
+                'limit' => $limit,
+                'pagination_token' => $paginationToken,
             ]
         );
+        
+        $query = http_build_query($queryParams);
+        
+        $payload = $queryParams;
 
-        return $this->_client->request('GET', "/vectors/list?$query");
+        $this->_validator->validate($payload, 'Vectors/list_vector_ids_request_schema.json');
+
+        $response = $this->_client->request('GET', "/vectors/list?$query");
+    
+        $this->_validator->validate($response, 'Vectors/list_vector_ids_response_schema.json');
+    
+        return $response;
     }
 
     /**
@@ -211,9 +240,7 @@ class VectorService
      */
     public function deleteVectors(string $indexName, array $vectorIds, ?string $namespace = null): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
+        $this->_validator->checkNonEmptyValue($indexName, 'Index name');
 
         $payload = ['ids' => $vectorIds];
 
@@ -221,7 +248,13 @@ class VectorService
             $payload['namespace'] = $namespace;
         }
 
-        return $this->_client->request('POST', '/vectors/delete', $payload);
+        $this->_validator->validate($payload, 'Vectors/delete_vectors_request_schema.json');
+
+        $response = $this->_client->request('POST', '/vectors/delete', $payload);
+    
+        $this->_validator->validate($response, 'Vectors/empty_response_schema.json');
+    
+        return $response;
     }
 
     /**
@@ -235,12 +268,8 @@ class VectorService
      */
     public function deleteNamespace(string $indexName, string $namespace): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
-        if (empty($namespace)) {
-            throw new PCDBException('Namespace name cannot be empty');
-        }
+        $this->_validator->checkNonEmptyValue($indexName, 'Index name');
+        $this->_validator->checkNonEmptyValue($namespace, 'Namespace');
 
         $vectorIds = $this->listVectorIDs($indexName, $namespace)['ids'] ?? [];
 

@@ -7,11 +7,11 @@ use PCDB\Http\Client;
 use PCDB\Http\Config;
 use PCDB\Services\IndexService;
 use PCDB\Models\IndexConfig;
+use PCDB\Validation\PCDBValidator;
 
 class IndexServiceIntegrationTest extends TestCase
 {
     private IndexService $indexService;
-    private IndexService $indexService2;
     private string $indexName;
 
     protected function setUp(): void
@@ -19,7 +19,7 @@ class IndexServiceIntegrationTest extends TestCase
         $config = new Config();
         $client = new Client($config);
 
-        $this->indexService = new IndexService($client);
+        $this->indexService = new IndexService($client, new PCDBValidator(new \JsonSchema\Validator()));
         $this->indexName = 'integration-test-index';
     }
 
@@ -45,13 +45,17 @@ class IndexServiceIntegrationTest extends TestCase
 
         // Step 2: Wait for Index to be Ready
         $ready = false;
-        while (!$ready) {
+        $maxRetries = 10;
+        $retryCount = 0;
+        while (!$ready && $retryCount < $maxRetries) {
             $describeResponse = $this->indexService->describeIndex($this->indexName);
             $ready = $describeResponse['status']['ready'] ?? false;
             if (!$ready) {
                 sleep(20); // Sleep before checking again
+                $retryCount++;
             }
         }
+        $this->assertTrue($ready, 'Index did not become ready within the allowed time.');
 
         // Step 3: Describe Index
         $describeResponse = $this->indexService->describeIndex($this->indexName);
@@ -68,5 +72,14 @@ class IndexServiceIntegrationTest extends TestCase
         $deleteResponse = $this->indexService->deleteIndex($this->indexName);
         $this->assertIsArray($deleteResponse);
         $this->assertEmpty($deleteResponse);
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            $this->indexService->deleteIndex($this->indexName);
+        } catch (Exception $e) {
+            // If index doesn't exist, do nothing
+        }
     }
 }

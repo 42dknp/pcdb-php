@@ -1,0 +1,11 @@
+{
+    "type": "object",
+    "properties": {
+      "namespace": { "type": "string" },
+      "prefix": { "type": "string" },
+      "limit": { "type": "integer" },
+      "pagination_token": { "type": "string" }
+    },
+    "additionalProperties": false
+  }
+  

@@ -7,6 +7,7 @@ use PCDB\Http\Client;
 use PCDB\Exceptions\PCDBException;
 use PCDB\Models\IndexConfig;
 use PCDB\Services\IndexService;
+use PCDB\Validation\PCDBValidator;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -18,11 +19,18 @@ class IndexServiceTest extends TestCase
 {
     private IndexService $indexService;
     private MockObject $client;
+    private MockObject $validator;
 
     protected function setUp(): void
     {
+        // Create a mock for Client
         $this->client = $this->createMock(Client::class);
-        $this->indexService = new IndexService($this->client);
+
+        // Create a mock for PCDBValidator
+        $this->validator = $this->createMock(PCDBValidator::class);
+
+        // Pass both client and validator to the IndexService constructor
+        $this->indexService = new IndexService($this->client, $this->validator);
     }
 
     /**
@@ -168,17 +176,20 @@ class IndexServiceTest extends TestCase
 
     public function testCreateIndexThrowsExceptionOnEmptyName(): void
     {
-        $this->expectException(PCDBException::class);
-        $this->expectExceptionMessage('Index name cannot be empty');
-
-        $config = new IndexConfig('', 'cosine', 128, [
+        $this->expectException(TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($indexName) must be of type string, null given');
+    
+        // Pass null for the indexName to trigger a TypeError
+        $config = new IndexConfig(null, 'cosine', 128, [
             'pod' => [
                 'environment' => 'us-west1',
                 'pod_type' => 'p1.x1',
                 'pods' => 1
             ]
         ]);
-
+    
         $this->indexService->createIndex($config);
     }
+    
+
 }

@@ -1,0 +1,27 @@
+{
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "dimension": {
+            "type": "integer"
+        },
+        "metric": {
+            "type": "string"
+        },
+        "status": {
+            "type": "object",
+            "properties": {
+                "ready": {
+                    "type": "boolean"
+                },
+                "state": {
+                    "type": "string"
+                }
+            },
+            "required": ["ready", "state"]
+        }
+    },
+    "required": ["name", "dimension", "metric", "status"]
+}

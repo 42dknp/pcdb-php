@@ -1,0 +1,32 @@
+{
+    "type": "object",
+    "properties": {
+      "vectors": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" }
+          },
+          "required": ["id"]
+        }
+      },
+      "pagination": {
+        "type": "object",
+        "properties": {
+          "next": { "type": "string" }
+        }
+      },
+      "namespace": { "type": "string" },
+      "usage": {
+        "type": "object",
+        "properties": {
+          "readUnits": { "type": "integer" }
+        },
+        "required": ["readUnits"]
+      }
+    },
+    "required": ["vectors", "namespace", "usage"],
+    "additionalProperties": false
+  }
+  

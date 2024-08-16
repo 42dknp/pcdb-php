@@ -10,6 +10,7 @@ use PCDB\Services\VectorService;
 use PCDB\Models\IndexConfig;
 use PCDB\Models\VectorModel;
 use PCDB\Models\VectorQuery;
+use PCDB\Validation\PCDBValidator;
 
 class VectorServiceIntegrationTest extends TestCase
 {
@@ -22,7 +23,8 @@ class VectorServiceIntegrationTest extends TestCase
         $config = new Config();
         $client = new Client($config);
 
-        $this->indexService = new IndexService($client);
+        // Pass validator to IndexService
+        $this->indexService = new IndexService($client, new PCDBValidator(new \JsonSchema\Validator()));
         $this->indexName = 'integration-test-index';
 
         // Create a test index
@@ -41,15 +43,19 @@ class VectorServiceIntegrationTest extends TestCase
         );
         $this->indexService->createIndex($indexConfig);
 
-        // Wait for the index to be ready
+        // Wait for the index to be ready (with retry limit)
         $ready = false;
-        while (!$ready) {
+        $maxRetries = 10;
+        $retryCount = 0;
+        while (!$ready && $retryCount < $maxRetries) {
             $describeResponse = $this->indexService->describeIndex($this->indexName);
             $ready = $describeResponse['status']['ready'] ?? false;
             if (!$ready) {
                 sleep(20);
+                $retryCount++;
             }
         }
+        $this->assertTrue($ready, 'Index did not become ready within the allowed time.');
 
         // Get the custom endpoint for the index
         $listResponse = $this->indexService->listIndexes();
@@ -66,13 +72,17 @@ class VectorServiceIntegrationTest extends TestCase
 
         // Reinitialize the client and vector service with the custom endpoint
         $customClient = new Client($config, null, "https://$host");
-        $this->vectorService = new VectorService($customClient);
+        $this->vectorService = new VectorService($customClient, new PCDBValidator(new \JsonSchema\Validator()));
     }
 
     protected function tearDown(): void
     {
         // Delete the test index
-        $this->indexService->deleteIndex($this->indexName);
+        try {
+            $this->indexService->deleteIndex($this->indexName);
+        } catch (Exception $e) {
+            // Ignore any exceptions during deletion (index might already be deleted)
+        }
     }
 
     public function testVectorLifecycle(): void
@@ -84,11 +94,11 @@ class VectorServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('upsertedCount', $upsertResponse);
         $this->assertEquals(2, $upsertResponse['upsertedCount']);
 
-        // Step 2: Fetch vectors
+        // Step 2: Fetch Vectors
         $fetchResponse = $this->vectorService->fetch($this->indexName, ['vec1', 'vec2']);
         $this->assertArrayHasKey('vectors', $fetchResponse);
 
-        // Step 3: Query vectors
+        // Step 3: Query Vectors
         $query = new VectorQuery(
             array_fill(0, 1536, 0.1),
             2,
@@ -100,7 +110,7 @@ class VectorServiceIntegrationTest extends TestCase
         $queryResponse = $this->vectorService->query($this->indexName, $query);
         $this->assertArrayHasKey('matches', $queryResponse);
 
-        // Step 4: Delete vectors
+        // Step 4: Delete Vectors
         $deleteResponse = $this->vectorService->deleteVectors($this->indexName, ['vec1', 'vec2']);
         $this->assertIsArray($deleteResponse);
         $this->assertEmpty($deleteResponse);

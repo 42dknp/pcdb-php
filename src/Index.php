@@ -16,7 +16,7 @@ use PCDB\Exceptions\PCDBException;
 class Index
 {
     private IndexService $_indexService;
-
+    
     /**
      * Index constructor.
      *
@@ -94,8 +94,8 @@ class Index
     /**
      * Update the configuration of an index.
      *
-     * @param string                    $indexName          Name of the index to update.
-     * @param array<string, mixed>      $indexConfig        Configuration array for the index.
+     * @param string               $indexName   Name of the index to update.
+     * @param array<string, mixed> $indexConfig Configuration array for the index.
      * 
      * @return array<string, mixed>
      */

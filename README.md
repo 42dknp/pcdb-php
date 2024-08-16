@@ -44,27 +44,23 @@ return [
 
 ## Usage
 
-### Index
+### Index Operations
 
-The `Index.php` wrapper class simplifies interactions with the Pinecone vector database API. Below are examples of how to use this class for various index operations.
+The `Index.php` wrapper simplifies interactions with Pinecone's API for index operations. You can create, update, delete, and list indexes easily.
 
 #### Initialize the Index Class
 
-To start using the `Index` class, you need to initialize it with the required configuration. You can use the default configuration or provide a custom endpoint.
+Initialize the `Index` class using the default configuration or a custom endpoint.
 
 ```php
 use PCDB\Index;
-use PCDB\Http\Config;
 
-$config = new Config();
-$customEndpoint = 'https://custom-endpoint.svc.region.pinecone.io';
-$index = new Index($config, $customEndpoint);
+$index = new Index();
 ```
-Of course you need to create an index before you get the endpoint url.
 
-#### Create Index
+#### Create an Index
 
-To create a new index with the specified configuration:
+To create an index, specify the metric, dimensions, and other configuration options.
 
 ```php
 $indexConfig = [
@@ -83,15 +79,15 @@ $indexConfig = [
 $response = $index->createIndex($indexConfig);
 ```
 
-#### Describe Index
+#### Describe an Index
 
-To get details about a specific index:
+Get details about a specific index:
 
 ```php
 $response = $index->describeIndex('example-index');
 ```
 
-#### List Indexes
+#### List All Indexes
 
 To list all indexes:
 
@@ -99,58 +95,53 @@ To list all indexes:
 $response = $index->listIndexes();
 ```
 
-#### Delete Index
+#### Delete an Index
 
-To delete a specific index:
+Delete a specific index:
 
 ```php
 $response = $index->deleteIndex('example-index');
 ```
 
-#### Update Index Configuration
-
-To update the configuration of an existing index:
-
-```php
-$indexConfig = [
-    'metric' => 'cosine',
-    'dimension' => 1536,
-    'spec' => [
-        'serverless' => [
-            'cloud' => 'aws',
-            'region' => 'us-east-1'
-        ],
-        'replicas' => 2,
-        'shards' => 1,
-    ]
-];
-$response = $index->updateIndexConfig('example-index', $indexConfig);
-```
 
 #### Describe Index Statistics
 
-To get statistics about a specific index:
+Retrieve statistics for a specific index:
+
+To retrieve statistics for a specific index, you need to use a custom endpoint since the default Pinecone API endpoint doesn't handle this request.
+
+Make sure to define a custom endpoint for your Pinecone environment and pass a Config() instance to the Index class. For all other operations, the default API endpoint can be used:
 
 ```php
+use PCDB\Http\Config;
+use PCDB\Index;
+
+$config = new Config();
+
+$customEndpoint = "your-custom-endpoint.pinecone.io";
+
+$indexService = new Index($config, $custom_endpoint);
+
 $response = $index->describeIndexStats('example-index');
 ```
 
+### Vector Operations
 
-
-### Vector
-
-The `Vector.php` wrapper class simplifies interactions with the Pinecone vector database API. Below are examples of how to use this class for various vector operations.
+The `Vector.php` wrapper simplifies vector operations, such as upserting, fetching, querying, and deleting vectors.
 
 #### Initialize the Vector Class
 
-To start using the `Vector` class, you need to initialize it with the required configuration. You can use the default configuration or provide a custom endpoint.
+You can initialize the `Vector` class using default configurations or a custom endpoint.
 
 ```php
 use PCDB\Vector;
 use PCDB\Http\Config;
 
 $config = new Config();
-$vector = new Vector($config);
+
+$customEndpoint = "your-custom-endpoint.pinecone.io";
+
+$vector = new Vector($config, $custom_endpoint);
 ```
 
 #### Upsert Vectors
@@ -165,21 +156,23 @@ $vectors = [
     new VectorModel('vec1', array_fill(0, 1536, 0.5)),
     new VectorModel('vec2', array_fill(0, 1536, 0.3))
 ];
+
 $response = $vector->upsertVectors($indexName, $vectors);
 ```
 
 #### Fetch Vectors
 
-To fetch vectors by their IDs from a specified index:
+Fetch vectors by their IDs:
 
 ```php
 $vectorIds = ['vec1', 'vec2'];
+
 $response = $vector->fetchVectors($indexName, $vectorIds);
 ```
 
 #### Query Vectors
 
-To query vectors in a specified index:
+Query vectors from a specified index:
 
 ```php
 use PCDB\Models\VectorQuery;
@@ -192,23 +185,25 @@ $query = new VectorQuery(
     true,
     true
 );
+
 $response = $vector->queryVectors($indexName, $query);
 ```
 
 #### Update Vectors
 
-To update vectors in a specified index:
+To update vector values or metadata:
 
 ```php
 $vectorId = 'vec1';
 $values = array_fill(0, 1536, 0.6);
 $metadata = ['category' => 'example'];
+
 $response = $vector->updateVector($indexName, $vectorId, $values, $metadata);
 ```
 
 #### List Vector IDs
 
-To list vector IDs in a specified index:
+List all vector IDs in a specified index:
 
 ```php
 $response = $vector->listVectorIDs($indexName);
@@ -216,15 +211,30 @@ $response = $vector->listVectorIDs($indexName);
 
 #### Delete Vectors
 
-To delete vectors from a specified index by their IDs:
+To delete vectors from a specified index:
 
 ```php
 $vectorIds = ['vec1', 'vec2'];
 $response = $vector->deleteVectors($indexName, $vectorIds);
 ```
 
+## JSON Schema Validation
+
+All requests and responses are validated against predefined JSON schemas for better input validation and error handling. The validation ensures that the data passed to Pinecone APIs complies with the expected formats.
+
+## Testing
+
+The package comes with unit and integration tests using PHPUnit. Before submitting a pull request, make sure to run the tests:
+
+```bash
+./vendor/bin/phpunit
+```
+
+Also make sure to add valid Pinecone credentials to your .env. Otherwise the Integration tests will not work.
+
 ## Upcoming Features
-- Support for Collections and Inference
+- **Support for collections**: Advanced support for managing collections of vectors.
+- **Inference features**: Enhanced vector inference capabilities.
 
 
 ## Contributing

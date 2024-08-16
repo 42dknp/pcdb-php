@@ -1,0 +1,9 @@
+{
+    "type": "object",
+    "properties": {
+        "name": { "type": "string" },
+        "dimension": { "type": "integer" },
+        "metric": { "type": "string" }
+    },
+    "required": ["name", "dimension", "metric"]
+}

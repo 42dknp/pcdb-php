@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "indexName": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": ["indexName"],
+  "additionalProperties": false
+}

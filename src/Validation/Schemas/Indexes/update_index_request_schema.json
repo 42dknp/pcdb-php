@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "properties": {
+    "spec": {
+      "type": "object",
+      "properties": {
+        "pod": {
+          "type": "object",
+          "properties": {
+            "pod_type": {
+              "type": "string"
+            },
+            "replicas": {
+              "type": "integer"
+            }
+          },
+          "required": ["pod_type", "replicas"]
+        }
+      },
+      "required": ["pod"]
+    }
+  },
+  "required": ["spec"]
+}

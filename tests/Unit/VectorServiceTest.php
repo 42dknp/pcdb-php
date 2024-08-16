@@ -7,6 +7,7 @@ use PCDB\Http\Client;
 use PCDB\Models\VectorModel;
 use PCDB\Models\VectorQuery;
 use PCDB\Services\VectorService;
+use PCDB\Validation\PCDBValidator;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -18,11 +19,16 @@ class VectorServiceTest extends TestCase
 {
     private VectorService $vectorService;
     private MockObject $client;
+    private MockObject $validator;
 
     protected function setUp(): void
     {
+        // Create mocks for Client and PCDBValidator
         $this->client = $this->createMock(Client::class);
-        $this->vectorService = new VectorService($this->client);
+        $this->validator = $this->createMock(PCDBValidator::class);
+
+        // Inject both the client and the validator into the VectorService
+        $this->vectorService = new VectorService($this->client, $this->validator);
     }
 
     /**
@@ -56,6 +62,12 @@ class VectorServiceTest extends TestCase
      */
     public function testUpsert(array $vectors): void
     {
+        // Mock the validator to expect the validate call
+        $this->validator->expects($this->atLeastOnce())
+            ->method('validate')
+            ->withAnyParameters();
+
+        // Mock the client's request method
         $this->client->expects($this->once())
             ->method('request')
             ->with('POST', '/vectors/upsert', [
@@ -82,10 +94,15 @@ class VectorServiceTest extends TestCase
         $this->assertIsArray($response);
     }
 
-
     public function testFetch(): void
     {
         $vectorIds = ['vec1', 'vec2'];
+
+        // Mock the validator
+        $this->validator->expects($this->atLeastOnce())
+            ->method('validate')
+            ->withAnyParameters();
+
         $this->client->expects($this->once())
             ->method('request')
             ->with('GET', '/vectors/fetch?ids=vec1&ids=vec2')
@@ -98,6 +115,12 @@ class VectorServiceTest extends TestCase
     public function testQuery(): void
     {
         $query = new VectorQuery([0.1, 0.2, 0.3], 5, null, ['genre' => 'drama'], true, true);
+
+        // Mock the validator
+        $this->validator->expects($this->atLeastOnce())
+            ->method('validate')
+            ->withAnyParameters();
+
         $this->client->expects($this->once())
             ->method('request')
             ->with('POST', '/query', [
@@ -108,15 +131,18 @@ class VectorServiceTest extends TestCase
                 'includeMetadata' => $query->includeMetadata,
             ])
             ->willReturn(['matches' => []]);
-    
+
         $response = $this->vectorService->query('test-index', $query);
         $this->assertIsArray($response);
     }
-    
-
 
     public function testUpdate(): void
     {
+        // Mock the validator
+        $this->validator->expects($this->atLeastOnce())
+            ->method('validate')
+            ->withAnyParameters();
+
         $this->client->expects($this->once())
             ->method('request')
             ->with('POST', '/vectors/update', [
@@ -136,6 +162,11 @@ class VectorServiceTest extends TestCase
             'limit' => 100,
         ]);
 
+        // Mock the validator
+        $this->validator->expects($this->atLeastOnce())
+            ->method('validate')
+            ->withAnyParameters();
+
         $this->client->expects($this->once())
             ->method('request')
             ->with('GET', '/vectors/list?' . $query)
@@ -148,6 +179,12 @@ class VectorServiceTest extends TestCase
     public function testDeleteVectors(): void
     {
         $vectorIds = ['vec1', 'vec2'];
+
+        // Mock the validator
+        $this->validator->expects($this->atLeastOnce())
+            ->method('validate')
+            ->withAnyParameters();
+
         $this->client->expects($this->once())
             ->method('request')
             ->with('POST', '/vectors/delete', [

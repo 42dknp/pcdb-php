@@ -1,0 +1,40 @@
+{
+    "type": "object",
+    "properties": {
+      "name": { "type": "string" },
+      "metric": { "type": "string" },
+      "dimension": { "type": "integer" },
+      "host": { "type": "string" },
+      "spec": {
+        "type": "object",
+        "properties": {
+          "serverless": {
+            "type": "object",
+            "properties": {
+              "region": { "type": "string" },
+              "cloud": { "type": "string" }
+            }
+          },
+          "pod": {
+            "type": "object",
+            "properties": {
+              "replicas": { "type": "integer" },
+              "shards": { "type": "integer" },
+              "pods": { "type": "integer" },
+              "pod_type": { "type": "string" },
+              "environment": { "type": "string" }
+            }
+          }
+        }
+      },
+      "status": {
+        "type": "object",
+        "properties": {
+          "ready": { "type": "boolean" },
+          "state": { "type": "string" }
+        }
+      }
+    },
+    "required": ["name", "metric", "dimension", "host", "spec", "status"]
+  }
+  

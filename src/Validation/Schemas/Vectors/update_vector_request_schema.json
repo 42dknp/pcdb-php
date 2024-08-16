@@ -1,0 +1,16 @@
+{
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "values": {
+        "type": "array",
+        "items": { "type": "number" }
+      },
+      "setMetadata": {
+        "type": "object"
+      },
+      "namespace": { "type": "string" }
+    },
+    "required": ["id", "values", "setMetadata"]
+  }
+  

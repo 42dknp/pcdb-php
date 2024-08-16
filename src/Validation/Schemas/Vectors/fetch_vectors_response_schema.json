@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "properties": {
+    "namespace": {
+      "type": "string"
+    },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "readUnits": {
+          "type": "integer"
+        }
+      },
+      "required": ["readUnits"]
+    },
+    "vectors": {
+      "oneOf": [
+        {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9-_]+$": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              },
+              "required": ["id", "values"]
+            }
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "values": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "required": ["id", "values"]
+          }
+        }
+      ]
+    }
+  },
+  "required": ["namespace", "usage", "vectors"]
+}

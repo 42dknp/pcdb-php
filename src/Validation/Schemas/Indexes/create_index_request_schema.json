@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "dimension": { "type": "integer", "minimum": 1 },
+    "metric": { "type": "string", "minLength": 1 },
+    "spec": {
+      "type": "object",
+      "oneOf": [
+        {
+          "properties": {
+            "serverless": {
+              "type": "object",
+              "properties": {
+                "cloud": { "type": "string", "minLength": 1 },
+                "region": { "type": "string", "minLength": 1 }
+              },
+              "required": ["cloud", "region"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["serverless"]
+        },
+        {
+          "properties": {
+            "pod": {
+              "type": "object",
+              "properties": {
+                "environment": { "type": "string", "minLength": 1 },
+                "pod_type": { "type": "string", "minLength": 1 },
+                "pods": { "type": "integer", "minimum": 1 },
+                "replicas": { "type": "integer", "minimum": 1 },
+                "shards": { "type": "integer", "minimum": 1 }
+              },
+              "required": ["environment", "pod_type", "pods"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["pod"]
+        }
+      ]
+    },
+    "deletion_protection": {
+      "type": "string",
+      "enum": ["enabled", "disabled"]
+    }
+  },
+  "required": ["name", "dimension", "metric", "spec"],
+  "additionalProperties": false
+}

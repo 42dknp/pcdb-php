@@ -1,0 +1,70 @@
+{
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "dimension": {
+        "type": "integer"
+      },
+      "metric": {
+        "type": "string"
+      },
+      "host": {
+        "type": "string"
+      },
+      "spec": {
+        "type": "object",
+        "properties": {
+          "pod": {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "metadata_config": {
+                "type": "object",
+                "properties": {
+                  "indexed": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": ["indexed"]
+              },
+              "pod_type": {
+                "type": "string"
+              },
+              "pods": {
+                "type": "integer"
+              },
+              "replicas": {
+                "type": "integer"
+              },
+              "shards": {
+                "type": "integer"
+              }
+            },
+            "required": ["environment", "metadata_config", "pod_type", "pods", "replicas", "shards"]
+          }
+        },
+        "required": ["pod"]
+      },
+      "status": {
+        "type": "object",
+        "properties": {
+          "ready": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": ["ready", "state"]
+      }
+    },
+    "required": ["name", "dimension", "metric", "host", "spec", "status"]
+  }
+  

@@ -1,0 +1,26 @@
+{
+    "type": "object",
+    "properties": {
+      "vector": {
+        "type": "array",
+        "items": { "type": "number" }
+      },
+      "filter": {
+        "type": "object"
+      },
+      "topK": {
+        "type": "integer"
+      },
+      "includeValues": {
+        "type": "boolean"
+      },
+      "includeMetadata": {
+        "type": "boolean"
+      },
+      "namespace": {
+        "type": "string"
+      }
+    },
+    "required": ["vector", "topK", "includeValues", "includeMetadata"]
+  }
+  

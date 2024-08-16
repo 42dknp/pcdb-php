@@ -1,0 +1,42 @@
+{
+    "type": "object",
+    "properties": {
+      "vectors": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "values": {
+              "type": "array",
+              "items": { "type": "number" }
+            },
+            "sparse_values": {
+              "type": "object",
+              "properties": {
+                "indices": {
+                  "type": "array",
+                  "items": { "type": "integer" }
+                },
+                "values": {
+                  "type": "array",
+                  "items": { "type": "number" }
+                }
+              },
+              "required": ["indices", "values"]
+            },
+            "metadata": {
+              "type": "object",
+              "properties": {
+                "genre": { "type": "string" }
+              }
+            }
+          },
+          "required": ["id", "values"]
+        }
+      },
+      "namespace": { "type": "string" }
+    },
+    "required": ["vectors"]
+  }
+  

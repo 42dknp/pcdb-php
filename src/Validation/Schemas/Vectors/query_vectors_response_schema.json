@@ -1,0 +1,30 @@
+{
+    "type": "object",
+    "properties": {
+      "matches": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "score": { "type": "number" },
+            "values": {
+              "type": "array",
+              "items": { "type": "number" }
+            }
+          },
+          "required": ["id", "score", "values"]
+        }
+      },
+      "namespace": { "type": "string" },
+      "usage": {
+        "type": "object",
+        "properties": {
+          "readUnits": { "type": "integer" }
+        },
+        "required": ["readUnits"]
+      }
+    },
+    "required": ["matches", "namespace", "usage"]
+  }
+  

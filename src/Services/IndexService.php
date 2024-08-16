@@ -5,6 +5,7 @@ namespace PCDB\Services;
 use PCDB\Http\Client;
 use PCDB\Exceptions\PCDBException;
 use PCDB\Models\IndexConfig;
+use PCDB\Validation\PCDBValidator;
 
 /**
  * IndexService
@@ -14,15 +15,17 @@ use PCDB\Models\IndexConfig;
 class IndexService
 {
     private Client $_client;
+    private PCDBValidator $_validator; // Declare the property
 
     /**
      * IndexService constructor.
      *
      * @param Client $_client PCDB client.
      */
-    public function __construct(Client $_client)
+    public function __construct(Client $_client, ?PCDBValidator $_validator = null)
     {
         $this->_client = $_client;
+        $this->_validator = $_validator ?? new PCDBValidator(new \JsonSchema\Validator());
     }
 
     /**
@@ -35,11 +38,10 @@ class IndexService
      */
     public function createIndex(IndexConfig $config): array
     {
-        if (empty($config->indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
+        $this->_validator->checkIndexName($config);
 
         $spec = [];
+        
         if ($config->environment && $config->podType && $config->pods !== null) {
             $spec['pod'] = [
                 'environment' => $config->environment,
@@ -58,15 +60,23 @@ class IndexService
         $spec['replicas'] = $config->replicas;
         $spec['shards'] = $config->shards;
 
-        return $this->_client->request(
-            'POST', "/indexes", [
+        $payload = [
             'name' => $config->indexName,
             'dimension' => $config->dimension,
             'metric' => $config->metric,
             'spec' => $spec,
             'deletion_protection' => $config->deletionProtection ?? 'disabled',
-            ]
+        ];
+
+        $this->_validator->validate($payload, 'Indexes/create_index_request_schema.json');
+
+        $response = $this->_client->request(
+            'POST', "/indexes", $payload
         );
+
+        $this->_validator->validate($response, 'Indexes/create_index_response_schema.json');
+
+        return $response;
     }
 
     /**
@@ -79,9 +89,9 @@ class IndexService
      */
     public function deleteIndex(string $indexName): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
+        $this->_validator->checkIndexName($indexName);
+
+        $this->_validator->validate(['indexName' => $indexName], 'Indexes/base_index_request_schema.json');
 
         return $this->_client->request("DELETE", "/indexes/$indexName");
     }
@@ -94,7 +104,11 @@ class IndexService
      */
     public function listIndexes(): array
     {
-        return $this->_client->request('GET', "/indexes");
+        $response = $this->_client->request('GET', "/indexes");
+
+        $this->_validator->validate($response, 'Indexes/list_indexes_response_schema.json');
+
+        return $response;
     }
 
     /**
@@ -107,11 +121,15 @@ class IndexService
      */
     public function describeIndex(string $indexName): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
+        $this->_validator->checkIndexName($indexName);
 
-        return $this->_client->request('GET', "/indexes/$indexName");
+         $this->_validator->validate(['indexName' => $indexName], 'Indexes/base_index_request_schema.json');
+
+        $response = $this->_client->request('GET', "/indexes/$indexName");
+
+        $this->_validator->validate($response, 'Indexes/describe_index_response_schema.json');
+
+        return $response;
     }
 
     /**
@@ -125,9 +143,7 @@ class IndexService
      */
     public function updateIndexConfig(string $indexName, IndexConfig $config): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
+        $this->_validator->checkIndexName($indexName);
 
         $payload = [];
         
@@ -152,10 +168,14 @@ class IndexService
             $payload['deletion_protection'] = $config->deletionProtection;
         }
 
-        return $this->_client->request('PATCH', "/indexes/$indexName", $payload);
+        $this->_validator->validate($payload, 'Indexes/update_index_request_schema.json');
+
+        $response = $this->_client->request('PATCH', "/indexes/$indexName", $payload);
+
+        $this->_validator->validate($response, 'Indexes/update_index_response_schema.json');
+
+        return $response;
     }
-
-
 
     /**
      * Retrieves the statistics of the specified index.
@@ -167,11 +187,15 @@ class IndexService
      */
     public function describeIndexStats(string $indexName): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
+        $this->_validator->checkIndexName($indexName);
 
-        return $this->_client->request('POST', "/describe_index_stats", ['index_name' => $indexName]);
+        $this->_validator->validate(['indexName' => $indexName], 'Indexes/base_index_request_schema.json');
+
+        $response = $this->_client->request('POST', "/describe_index_stats", ['index_name' => $indexName]);
+
+        $this->_validator->validate($response, 'Indexes/describe_index_stats_response_schema.json');
+
+        return $response;
     }
 
     /**
@@ -185,19 +209,23 @@ class IndexService
      */
     public function createBackup(string $indexName, string $backupName): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
-        if (empty($backupName)) {
-            throw new PCDBException('Backup name cannot be empty');
-        }
+        $this->_validator->checkIndexName($indexName);
+        $this->_validator->checkBackupName($backupName);
 
-        return $this->_client->request(
-            'POST', "/collections", [
+        $payload = [
             'name' => $backupName,
             'source' => $indexName
-            ]
+        ];
+    
+        $this->_validator->validate($payload, 'Indexes/create_backup_request_schema.json');
+    
+        $response = $this->_client->request(
+            'POST', "/collections", $payload
         );
+    
+        $this->_validator->validate($response, 'Indexes/create_backup_response_schema.json');
+    
+        return $response;
     }
 
     /**
@@ -213,20 +241,24 @@ class IndexService
      */
     public function restoreFromBackup(string $indexName, int $dimension, string $metric, string $backupName): array
     {
-        if (empty($indexName)) {
-            throw new PCDBException('Index name cannot be empty');
-        }
-        if (empty($backupName)) {
-            throw new PCDBException('Backup name cannot be empty');
-        }
+        $this->_validator->checkIndexName($indexName);
+        $this->_validator->checkBackupName($backupName);
 
-        return $this->_client->request(
-            'POST', "/indexes", [
+        $payload = [
             'name' => $indexName,
             'dimension' => $dimension,
             'metric' => $metric,
             'source_collection' => $backupName
-            ]
+        ];
+    
+        $this->_validator->validate($payload, 'Indexes/restore_from_backup_request_schema.json');
+    
+        $response = $this->_client->request(
+            'POST', "/indexes", $payload
         );
+    
+        $this->_validator->validate($response, 'Indexes/restore_from_backup_response_schema.json');
+    
+        return $response;
     }
 }

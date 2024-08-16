@@ -1,0 +1,24 @@
+{
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "source": {
+            "type": "string"
+        },
+        "status": {
+            "type": "object",
+            "properties": {
+                "ready": {
+                    "type": "boolean"
+                },
+                "state": {
+                    "type": "string"
+                }
+            },
+            "required": ["ready", "state"]
+        }
+    },
+    "required": ["name", "source", "status"]
+}
